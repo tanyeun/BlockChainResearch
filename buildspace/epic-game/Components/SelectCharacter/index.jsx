@@ -101,6 +101,14 @@ const SelectCharacter = ({ setCharacterNFT }) => {
        */
       gameContract.on('CharacterNFTMinted', onCharacterMint);
     }
+    return () => {
+    /*
+     * When your component unmounts, let;s make sure to clean up this listener
+     */
+    if (gameContract) {
+      gameContract.off('CharacterNFTMinted', onCharacterMint);
+    }
+  };
   }, [gameContract]);
 
   // Render Methods
