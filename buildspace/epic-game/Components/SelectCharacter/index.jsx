@@ -79,6 +79,7 @@ const SelectCharacter = ({ setCharacterNFT }) => {
         `CharacterNFTMinted - sender: ${sender} tokenId: ${tokenId.toNumber()}   characterIndex: ${characterIndex.toNumber()}`
       );
   
+      alert(`Your NFT is all done -- see it here: https://testnets.opensea.io/assets/${gameContract}/${tokenId.toNumber()}`)
       /*
        * Once our character NFT is minted we can fetch the metadata from our contract
        * and set it in state to move onto the Arena
