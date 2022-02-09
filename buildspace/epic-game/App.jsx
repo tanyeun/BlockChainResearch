@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import twitterLogo from './assets/twitter-logo.svg';
 import { CONTRACT_ADDRESS, transformCharacterData } from './constants';
 import SelectCharacter from './Components/SelectCharacter';
+import Arena from './Components/Arena';
 import myEpicGame from './utils/MyEpicGame.json';
 import './App.css';
 
@@ -91,6 +92,8 @@ const App = () => {
        */
     } else if (currentAccount && !characterNFT) {
       return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
+    } else if (currentAccount && characterNFT) {
+      return <Arena characterNFT={characterNFT} setCharacterNFT={setCharacterNFT} />;
     }
   };
 
@@ -128,16 +131,40 @@ const App = () => {
    */
   useEffect(() => {
     checkIfWalletIsConnected();
-
+    const getCharacters = async () => {
+      try {
+        console.log('Getting contract characters to mint');
+  
+        /*
+         * Call contract to get all mint-able characters
+         */
+        const charactersTxn = await gameContract.getAllDefaultCharacters();
+        console.log('charactersTxn:', charactersTxn);
+  
+        /*
+         * Go through all of our characters and transform the data
+         */
+        const characters = charactersTxn.map((characterData) =>
+          transformCharacterData(characterData)
+        );
+  
+        /*
+         * Set all mint-able characters in state
+         */
+        setCharacters(characters);
+      } catch (error) {
+        console.error('Something went wrong fetching characters:', error);
+      }
+    };
     //The function we will call that interacts with out smart contract
     const fetchNFTMetadata = async () => {
       console.log('Checking for Character NFT on address:', currentAccount);
 
-      const gameContract = getContract(window.ethereum)
-      if (!gameContract){
+      const myContract = getContract(window.ethereum)
+      if (!myContract){
         return;
       }else{
-        const txn = await gameContract.checkIfUserHasNFT();
+        const txn = await myContract.checkIfUserHasNFT();
         if (txn.name) {
           console.log('User has character NFT');
           setCharacterNFT(transformCharacterData(txn));

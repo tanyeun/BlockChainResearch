@@ -5,15 +5,17 @@ import myEpicGame from '../../utils/MyEpicGame.json';
 import './Arena.css';
 
 /*
- * We pass in our characterNFT metadata so we can show a cool card in our UI
+ * We pass in our characterNFT metadata so we can show a cool card in our UI.
+ * We are going to need to update our character NFT so pass setCharacterNFT here.
  */
-const Arena = ({ characterNFT }) => {
+const Arena = ({ characterNFT, setCharacterNFT }) => {
   // State
   const [gameContract, setGameContract] = useState(null);
   /*
    * State that will hold our boss metadata
    */
   const [boss, setBoss] = useState(null);
+  const [attackState, setAttackState] = useState('');
 
   // UseEffects
   useEffect(() => {
@@ -44,24 +46,66 @@ const Arena = ({ characterNFT }) => {
       console.log('Boss:', bossTxn);
       setBoss(transformCharacterData(bossTxn));
     };
-  
+    /*
+    * Setup logic when this event is fired off
+    */
+    const onAttackComplete = (newBossHp, newPlayerHp) => {
+        const bossHp = newBossHp.toNumber();
+        const playerHp = newPlayerHp.toNumber()
+        console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`)
+        /*
+        * Update both player and boss Hp
+        * spread operator "..." is used here
+        *    this will update al the previous states by the new bossHp
+        */
+        setBoss((prevState) => {
+            return { ...prevState, hp: bossHp };
+        })
+        setCharacterNFT((prevState) => {
+            return { ...prevState, hp: playerHp };
+        });
+    };
     if (gameContract) {
       /*
        * gameContract is ready to go! Let's fetch our boss
        */
       fetchBoss();
+      gameContract.on('AttackComplete', onAttackComplete);
+    }
+    /*
+    * Make sure to clean up this event when this component is removed
+    */
+    return () => {
+        if (gameContract) {
+            gameContract.off('AttackComplete', onAttackComplete);
+        }
     }
   }, [gameContract]);
 
   // Actions
-  const runAttackAction = async () => {};
+  const runAttackAction = async () => {
+    try {
+      if (gameContract) {
+        setAttackState('attacking');
+        console.log('Attacking boss...');
+        const attackTxn = await gameContract.attackBoss();
+        await attackTxn.wait();
+        console.log('attackTxn:', attackTxn);
+        setAttackState('hit');
+      }
+    } catch (error) {
+      console.error('Error attacking boss:', error);
+      setAttackState('');
+    }
+  };
 
   return (
     <div className="arena-container">
       {/* Boss */}
       {boss && (
         <div className="boss-container">
-          <div className={`boss-content`}>
+        {/* Add attackState to the className! After all, it's just class names */}
+        <div className={`boss-content ${attackState}`}>
             <h2>🔥 {boss.name} 🔥</h2>
             <div className="image-content">
               <img src={boss.imageURI} alt={`Boss ${boss.name}`} />
