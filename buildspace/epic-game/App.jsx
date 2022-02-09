@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import twitterLogo from './assets/twitter-logo.svg';
 import { CONTRACT_ADDRESS, transformCharacterData } from './constants';
 import SelectCharacter from './Components/SelectCharacter';
+import LoadingIndicator from './Components/LoadingIndicator';
 import Arena from './Components/Arena';
 import myEpicGame from './utils/MyEpicGame.json';
 import './App.css';
@@ -17,6 +18,7 @@ const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
   //Right under current account, setup this new state property
   const [characterNFT, setCharacterNFT] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   function getContract(ethereum){
     if (!ethereum) {
@@ -48,6 +50,7 @@ const App = () => {
 
       if (!ethereum) {
         console.log('Make sure you have MetaMask!');
+        setIsLoading(false);
         return;
       } else {
         console.log('We have the ethereum object', ethereum);
@@ -65,10 +68,17 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+    setIsLoading(false);
   };
 
   // Render Methods
   const renderContent = () => {
+    /*
+     * If the app is currently loading, just render out LoadingIndicator
+     */
+    if (isLoading) {
+      return <LoadingIndicator />;
+    }
     /*
      * Scenario #1
      */
@@ -130,7 +140,14 @@ const App = () => {
    * This runs our function when the page loads.
    */
   useEffect(() => {
+    /*
+     * Anytime our component mounts, make sure to immiediately set our loading state
+     */
+    setIsLoading(true);
     checkIfWalletIsConnected();
+  }, []);
+
+  useEffect(() => {
     const getCharacters = async () => {
       try {
         console.log('Getting contract characters to mint');
@@ -172,6 +189,10 @@ const App = () => {
           console.log('No character NFT found');
         }
       }
+      /*
+       * Once we are done with all the fetching, set loading state to false
+      */
+      setIsLoading(false);
     };
 
     //We only want to run this, if we have a connected wallet
